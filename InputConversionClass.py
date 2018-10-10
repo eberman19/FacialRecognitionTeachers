@@ -4,11 +4,15 @@ from numpy import array
 import os
 from PCA import * 
 
-class InputConversion:
+class InputConversion(PCA):
 
-    def __init__(self, image_dir):
+    def __init__(self, image_dir, k):
         self.image_dir = image_dir
-        self.matrix, self.shape = self.read_data()
+        self.Data, self.shape = self.read_data()
+        self.SetSize = self.Data.shape[1]
+        self.NormData, self.RowMean, self.MagMean = self.NormData()
+        self.eigenfaces, self.coefficients = self.ProcessData(k)
+        self.k = k
 
     def jpg_image_to_array(self, image_path):
         #Loads JPEG image into 3D Numpy array of 1 row
@@ -38,19 +42,14 @@ class InputConversion:
         Mall_images_matrix = all_images_matrix.reshape(shape1,shape2).T #creates number of images by pixels so transpose to pixels by number of images
         return Mall_images_matrix, Overallshape
 
-    def interactPCA(self):
-        FR = PCA(self.matrix)
-        v_reduce, z = FR.ProcessData(3)
-        return v_reduce, z, FR.MagMean
+    def plot_eigenfaces(self):
+        eigenfaces = [self.eigenfaces[:,i] * self.MagMean/np.linalg.norm(self.eigenfaces[:,i]) + self.RowMean for i in range(self.k)]
+        eigenfaces = [eigenfaces[i].astype(np.uint8) for i in range(len(eigenfaces))]
+        for i in range(len(eigenfaces)):
+            self.array_to_jpg_image(eigenfaces[i])
+        self.array_to_jpg_image(self.RowMean.astype(np.uint8)) #plots RowMean
 
-Instance = InputConversion("imgs")
-##wm, wmm = Instance.jpg_image_to_array("Waysek1 copy.jpg")
-##print(wmm)
-##Instance.array_to_jpg_image(wmm)
-v, z, mm = Instance.interactPCA()
-eigenfaces = [v[:,i] * mm/np.linalg.norm(v[:,i]) for i in range(v.shape[1])]
-eigenfaces = [eigenfaces[i].astype(np.uint8) for i in range(len(eigenfaces))]
-#print(eigenface1.astype(np.uint8))
-for i in range(len(eigenfaces)):
-    Instance.array_to_jpg_image(eigenfaces[i])
+Instance = InputConversion("imgs", 3)
+Instance.plot_eigenfaces()
+
 
